@@ -2,6 +2,8 @@ package com.jeffrey.mongodemo01.test;
 
 import com.jeffrey.mongodemo01.entity.StudentEntity;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -100,11 +103,40 @@ public class MongoDBTest001 {
         query.addCriteria(criteria);
         List<StudentEntity> studentEntities = mongoTemplate.find(query, StudentEntity.class);
 
-        System.out.println(studentEntities);
-        mongoTemplate.remove(studentEntities);
+        log.info("student={}",studentEntities);
+        //mongoTemplate.remove(studentEntities);
+        DeleteResult remove = mongoTemplate.remove(query, StudentEntity.class);
+        log.info("deleteResult={}",remove);
 
     }
 
+    @Test
+    public void testUpdate() {
+        Query query = new Query();
+        Criteria age = Criteria.where("age").gt(18);
+        query.addCriteria(age);
+        log.info("update before ..");
+        List<StudentEntity> studentEntities = mongoTemplate.find(query, StudentEntity.class);
+        log.info("student={}",studentEntities);
+        Update update = new Update();
+        update.set("name","lucksoul");
+        // 只更新符合条件的第一个
+//        UpdateResult updateResult = mongoTemplate.updateFirst(query, update, StudentEntity.class);
+        // 更新符合条件的所有
+//        UpdateResult updateResult = mongoTemplate.updateMulti(query, update, StudentEntity.class);
+        // 没有符合条件的，则插入
+        query = new Query();
+        age = Criteria.where("age").gt(180);
+        query.addCriteria(age);
+        update.set("id","1");
+        UpdateResult updateResult = mongoTemplate.upsert(query, update, StudentEntity.class);
+        log.info("updateResult={}",updateResult);
+        log.info("update after...");
+        List<StudentEntity> studentEntitiesAfter = mongoTemplate.find(query, StudentEntity.class);
+        log.info("student={}",studentEntitiesAfter);
+
+
+    }
 
 
 
